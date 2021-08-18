@@ -11,6 +11,7 @@ NS_SWIFT_NAME(ModuleRegistryProvider)
 
 @property (nonatomic, weak) id<EXModuleRegistryDelegate> moduleRegistryDelegate;
 
++ (NSSet<Class> *)getModulesClasses;
 + (NSSet *)singletonModules;
 + (nullable EXSingletonModule *)getSingletonModuleForClass:(Class)singletonClass;
 

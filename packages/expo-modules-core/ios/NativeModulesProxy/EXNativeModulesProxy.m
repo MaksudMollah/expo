@@ -3,6 +3,9 @@
 #import <objc/runtime.h>
 
 #import <React/RCTLog.h>
+#import <React/RCTUIManager.h>
+#import <React/RCTComponentData.h>
+#import <React/RCTModuleData.h>
 
 #import <ExpoModulesCore/EXNativeModulesProxy.h>
 #import <ExpoModulesCore/EXEventEmitter.h>
@@ -19,6 +22,12 @@ static const NSString *methodInfoKeyKey = @"key";
 static const NSString *methodInfoNameKey = @"name";
 static const NSString *methodInfoArgumentsCountKey = @"argumentsCount";
 
+@interface RCTBridge (RegisterAdditionalModuleClasses)
+
+- (void)registerAdditionalModuleClasses:(NSArray<Class> *)modules;
+
+@end
+
 @interface EXNativeModulesProxy ()
 
 @property (nonatomic, strong) NSRegularExpression *regexp;
@@ -26,17 +35,86 @@ static const NSString *methodInfoArgumentsCountKey = @"argumentsCount";
 @property (nonatomic, strong) NSMutableDictionary<const NSString *, NSMutableDictionary<NSString *, NSNumber *> *> *exportedMethodsKeys;
 @property (nonatomic, strong) NSMutableDictionary<const NSString *, NSMutableDictionary<NSNumber *, NSString *> *> *exportedMethodsReverseKeys;
 @property (nonatomic, strong) SwiftInteropBridge *swiftInteropBridge;
+@property (nonatomic) BOOL ownsModuleRegistry;
 
 @end
 
 @implementation EXNativeModulesProxy
 
+@synthesize bridge = _bridge;
+
+RCT_EXPORT_MODULE(NativeUnimoduleProxy)
+
+/**
+ The default designated initializer, called by React Native.
+ */
+- (instancetype)init
+{
+  if (self = [super init]) {
+    _exModuleRegistry = [[[EXModuleRegistryProvider alloc] init] moduleRegistry];
+    _exportedMethodsKeys = [NSMutableDictionary dictionary];
+    _exportedMethodsReverseKeys = [NSMutableDictionary dictionary];
+    _ownsModuleRegistry = YES;
+
+//    for (EXViewManager *viewManager in [_exModuleRegistry getAllViewManagers]) {
+//      Class viewManagerWrapperClass = [EXViewManagerAdapterClassesRegistry createViewManagerAdapterClassForViewManager:viewManager];
+//      RCTRegisterModule(viewManagerWrapperClass);
+  //    [additionalModuleClasses addObject:viewManagerWrapperClass];
+//    }
+  }
+  return self;
+}
+
+- (void)setBridge:(RCTBridge *)bridge
+{
+  _bridge = bridge;
+
+  if (!_ownsModuleRegistry) {
+    return;
+  }
+
+  EXReactNativeEventEmitter *eventEmitter = [bridge moduleForClass:[EXReactNativeEventEmitter class]];
+  [_exModuleRegistry registerInternalModule:eventEmitter];
+
+  NSMutableArray<Class> *additionalModuleClasses = [NSMutableArray new];
+  NSMutableDictionary *componentDataByName = [bridge.uiManager valueForKey:@"_componentDataByName"];
+
+//  for (Class klass in [EXModuleRegistryProvider getModulesClasses]) {
+//    if ([klass conformsToProtocol:@protocol(RCTBridgeModule)]) {
+//      [additionalModuleClasses addObject:klass];
+//    }
+//  }
+
+  for (EXViewManager *viewManager in [_exModuleRegistry getAllViewManagers]) {
+    Class viewManagerWrapperClass = [EXViewManagerAdapterClassesRegistry createViewManagerAdapterClassForViewManager:viewManager];
+    [additionalModuleClasses addObject:viewManagerWrapperClass];
+
+    RCTComponentData *componentData = [[RCTComponentData alloc] initWithManagerClass:viewManagerWrapperClass bridge:bridge];
+    componentDataByName[NSStringFromClass(viewManagerWrapperClass)] = componentData;
+  }
+
+  [additionalModuleClasses addObject:[EXViewManagerAdapter class]];
+
+//  [_bridge registerModulesForClasses:additionalModuleClasses];
+  [_bridge registerAdditionalModuleClasses:additionalModuleClasses];
+
+  EXReactNativeAdapter *reactNativeAdapter = [_exModuleRegistry getModuleImplementingProtocol:@protocol(EXUIManager)];
+  [reactNativeAdapter setBridge:bridge];
+
+  [_exModuleRegistry initialize];
+}
+
+/**
+ Notice that we call `super` here, so it's just another designated initializer. This is used in the old setup
+ where the native modules proxy is registered in `extraModulesForBridge:` by the bridge delegate.
+ */
 - (instancetype)initWithModuleRegistry:(EXModuleRegistry *)moduleRegistry
 {
   if (self = [super init]) {
     _exModuleRegistry = moduleRegistry;
     _exportedMethodsKeys = [NSMutableDictionary dictionary];
     _exportedMethodsReverseKeys = [NSMutableDictionary dictionary];
+    _ownsModuleRegistry = NO;
   }
   return self;
 }
@@ -47,11 +125,6 @@ static const NSString *methodInfoArgumentsCountKey = @"argumentsCount";
     _swiftInteropBridge = swiftInteropBridge;
   }
   return self;
-}
-
-+ (const NSString *)moduleName
-{
-  return @"NativeUnimoduleProxy";
 }
 
 # pragma mark - React API

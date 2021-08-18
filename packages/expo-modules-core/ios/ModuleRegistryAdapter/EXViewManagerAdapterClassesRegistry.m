@@ -30,12 +30,12 @@ static dispatch_once_t directEventBlockImplementationOnceToken;
 {
   Class viewManagerClass = [viewManager class];
   if (_viewManagerAdaptersClasses[viewManagerClass] == nil) {
-    _viewManagerAdaptersClasses[(id <NSCopying>)viewManagerClass] = [self _createViewManagerAdapterClassForViewManager:viewManager];
+    _viewManagerAdaptersClasses[(id <NSCopying>)viewManagerClass] = [self.class createViewManagerAdapterClassForViewManager:viewManager];
   }
   return _viewManagerAdaptersClasses[viewManagerClass];
 }
 
-- (Class)_createViewManagerAdapterClassForViewManager:(EXViewManager *)viewManager
++ (Class)createViewManagerAdapterClassForViewManager:(EXViewManager *)viewManager
 {
   const char *viewManagerClassName = [[viewManagerAdapterModuleNamePrefix stringByAppendingString:[viewManager viewName]] UTF8String];
   Class viewManagerAdapterClass = objc_allocateClassPair([EXViewManagerAdapter class], viewManagerClassName, 0);
@@ -46,7 +46,7 @@ static dispatch_once_t directEventBlockImplementationOnceToken;
   return viewManagerAdapterClass;
 }
 
-- (void)_ensureDirectEventBlockImplementationIsPresent
++ (void)_ensureDirectEventBlockImplementationIsPresent
 {
   dispatch_once(&directEventBlockImplementationOnceToken, ^{
     directEventBlockImplementation = imp_implementationWithBlock(^{

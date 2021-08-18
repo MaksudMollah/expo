@@ -18,7 +18,7 @@ import FlipperKit
 
 @UIApplicationMain
 class AppDelegate: AppDelegateWrapper {
-  var moduleRegistryAdapter: ModuleRegistryAdapter!
+//  var moduleRegistryAdapter: ModuleRegistryAdapter!
   var bridge: RCTBridge?
   var launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 
@@ -26,7 +26,7 @@ class AppDelegate: AppDelegateWrapper {
   
   override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
     initializeFlipper(with: application)
-    moduleRegistryAdapter = ModuleRegistryAdapter(moduleRegistryProvider: ModuleRegistryProvider())
+//    moduleRegistryAdapter = ModuleRegistryAdapter(moduleRegistryProvider: ModuleRegistryProvider())
     window = UIWindow(frame: UIScreen.main.bounds)
     self.launchOptions = launchOptions;
 
@@ -102,7 +102,8 @@ extension AppDelegate: RCTBridgeDelegate {
   }
   
   func extraModules(for bridge: RCTBridge!) -> [RCTBridgeModule] {
-    var extraModules = moduleRegistryAdapter.extraModules(for: bridge)
+    var extraModules = [RCTBridgeModule]()
+//    var extraModules = moduleRegistryAdapter.extraModules(for: bridge)
     // You can inject any extra modules that you would like here, more information at:
     // https://facebook.github.io/react-native/docs/native-modules-ios.html#dependency-injection
 

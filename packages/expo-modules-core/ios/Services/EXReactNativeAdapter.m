@@ -29,11 +29,6 @@
 
 EX_REGISTER_MODULE();
 
-+ (NSString *)moduleName
-{
-  return nil;
-}
-
 + (const NSArray<Protocol *> *)exportedInterfaces
 {
   return @[@protocol(EXAppLifecycleService), @protocol(EXUIManager), @protocol(EXJavaScriptContextProvider)];
