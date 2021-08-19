@@ -1,5 +1,5 @@
 ---
-title: Introduction to Expo
+title: Introduction to Mahira
 hideTOC: true
 ---
 
